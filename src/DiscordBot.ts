@@ -53,7 +53,7 @@ class DiscordBot {
             height = utils.clamp(Number(options[4]), 0, 9);
         }
 
-        let mines = Math.floor(width*height*0.15);
+        let mines = Math.floor(width*height*0.1);
         if (options.length > 2 && Number(options[2]) != NaN) {
             mines = utils.clamp(Number(options[2]), 0, width*height-1);
         }

@@ -137,8 +137,6 @@ class Board {
             const x = this.randomInt(this.width);
             const y = this.randomInt(this.height);
 
-            console.log(x);
-
             if (x == excludeX && y == excludeY) {
                 continue;
             }
