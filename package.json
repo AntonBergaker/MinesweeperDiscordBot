@@ -1,7 +1,7 @@
 {
-  "name": "gmstatic",
+  "name": "MinesweeperDiscordBot2",
   "version": "1.0.0",
-  "description": "Static types for GM",
+  "description": "Discord bot that lets you play minesweeper using links",
   "main": "index.js",
   "scripts": {
     "run": "ts-node \"src/index.ts\""

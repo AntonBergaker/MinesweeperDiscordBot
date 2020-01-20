@@ -226,11 +226,11 @@ class Board {
 
     public printLeft() : string {
         if (this.blewUp) {
-            return "You blew up!";
+            return "💣 You blew up! 💥";
         }
         
         if (this.won) {
-            return "You win!";
+            return "🎉🎉 You win! 🎉🎉";
         }
 
         return "Remaining: " + this.leftToClear;
