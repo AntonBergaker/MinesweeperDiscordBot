@@ -45,15 +45,15 @@ class DiscordBot {
 
         let width = 9;
         if (options.length > 3 && Number(options[3]) != NaN) {
-            width = utils.clamp(Number(options[3]), 0, 9);
+            width = utils.clamp(Number(options[3]), 1, 9);
         }
 
         let height = 9;
         if (options.length > 4 && Number(options[4]) != NaN) {
-            height = utils.clamp(Number(options[4]), 0, 9);
+            height = utils.clamp(Number(options[4]), 1, 9);
         }
 
-        let mines = Math.floor(width*height*0.1);
+        let mines = Math.floor(width*height*0.12);
         if (options.length > 2 && Number(options[2]) != NaN) {
             mines = utils.clamp(Number(options[2]), 0, width*height-1);
         }
