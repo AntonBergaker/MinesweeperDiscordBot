@@ -10,7 +10,7 @@ const client = new Discord.Client();
 const boards = new BoardLibrary();
 const discordbot = new DiscordBot(new Discord.Client(), boards, json["url"], json["token"]);
 
-const instantCloseWebpage = "<script>window.close()</script>";
+const instantCloseWebpage = readFileSync("./autoclose.html", 'utf8');
 
 const app = Express();
 const port = Number(json["port"]);
