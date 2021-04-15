@@ -114,6 +114,7 @@ class Board {
         const cell = this.board[x][y];
         if (cell.mine) {
             this.blewUp = true;
+            this.timeEnded = Date.now();
             cell.blewUp = true;
         } else {
             this.leftToClear--;
