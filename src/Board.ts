@@ -16,6 +16,9 @@ class Board {
     private totalMines : number;
     private id : number;
 
+    private timeStarted : number;
+    private timeEnded : number;
+
     get ID() : number {
         return this.id;
     }
@@ -103,6 +106,7 @@ class Board {
     public clear(x : number, y : number) {
         if (this.placedMines == false) {
             this.placedMines = true;
+            this.timeStarted = Date.now();
             this.placeMines(this.minesLeft, x, y);
             this.calculateNear();
         }
@@ -116,6 +120,7 @@ class Board {
 
             if (this.leftToClear == 0) {
                 this.won = true;
+                this.timeEnded = Date.now();
             }
         }
 
@@ -232,6 +237,14 @@ class Board {
         }
 
         return "Remaining: " + this.leftToClear;
+    }
+
+    public getElapsedSeconds(): number {
+        if (this.GameOver) {
+            return this.timeEnded - this.timeStarted;
+        } else {
+            return Date.now() - this.timeStarted;
+        }
     }
 }
 

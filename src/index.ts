@@ -4,16 +4,17 @@ import { BoardLibrary } from "./BoardLibrary";
 import Express = require("express");
 import { readFileSync } from "fs";
 
-const json = JSON.parse(readFileSync("./config.json", 'utf8'));
+const config = JSON.parse(readFileSync("./config.json", 'utf8'));
 
 const client = new Discord.Client();
 const boards = new BoardLibrary();
-const discordbot = new DiscordBot(new Discord.Client(), boards, json["url"], json["token"]);
+const discordbot = new DiscordBot(new Discord.Client(), config["identifier"], boards, config["url"], config["token"]);
 
-const instantCloseWebpage = readFileSync("./autoclose.html", 'utf8');
+const instantCloseWebpage = readFileSync("./pages/autoclose.html", 'utf8');
+const unknownWebpage = readFileSync("./pages/unknown.html", 'utf8');
 
 const app = Express();
-const port = Number(json["port"]);
+const port = Number(config["port"]);
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
 
 app.get('*', (req, res) => {
@@ -21,7 +22,7 @@ app.get('*', (req, res) => {
     const codeMaybe = req.url.replace('/', '');
     if (codeMaybe.length != 4) {
         res.statusCode = 400;
-        res.send(instantCloseWebpage);
+        res.send(unknownWebpage);
         return;
     }
 
@@ -36,7 +37,7 @@ app.get('*', (req, res) => {
 
     if (!board) {
         res.statusCode = 400;
-        res.send(instantCloseWebpage);
+        res.send(unknownWebpage);
         return;
     }
 
