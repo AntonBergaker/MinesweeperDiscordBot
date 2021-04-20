@@ -14,22 +14,27 @@ class Board {
     private width : number;
     private height : number;
     private totalMines : number;
-    private id : number;
+    private _id : number;
 
     private timeStarted : number;
     private timeEnded : number;
+    private _starterUserId: string;
 
-    get ID() : number {
-        return this.id;
+    get id() : number {
+        return this._id;
     }
 
-    get GameOver() : boolean {
+    get gameOver() : boolean {
         return this.blewUp || this.won;
+    }
+
+    get starterUserId(): string {
+        return this._starterUserId;
     }
 
     public message : Discord.Message;
 
-    constructor(width : number, height : number, mines : number) {
+    constructor(width : number, height : number, mines : number, starterUserId: string) {
         
         this.width = width;
         this.height = height;
@@ -38,6 +43,8 @@ class Board {
         this.placedMines = false;
         this.blewUp = false;
         this.won = false;
+
+        this._starterUserId = starterUserId;
 
         this.board = new Array<Array<Cell>>(width);
         for (let x=0;x<width;x++) {
@@ -51,14 +58,14 @@ class Board {
     }
 
     public setID(id : number) {
-        this.id = id;
+        this._id = id;
         this.setCellUrls();
     }
 
     private setCellUrls() {
         for (let x=0;x<this.width;x++) {
             for (let y=0; y<this.height;y++) {
-                const bitMask = this.id << 8 | y << 4 | x;
+                const bitMask = this._id << 8 | y << 4 | x;
                 const buffer = Buffer.alloc(3);
                 buffer[0] = ((bitMask & 0xFF0000) >> 16);
                 buffer[1] = ((bitMask & 0x00FF00) >> 8);
@@ -138,28 +145,63 @@ class Board {
     }
 
     private placeMines(minesToPlace : number, excludeX : number, excludeY : number) {
-        let tries = 0;
-        while (minesToPlace > 0) {
-            const x = this.randomInt(this.width);
-            const y = this.randomInt(this.height);
+        // Do the fast method if the amount of mines is "normal", otherwise do the constant time slow one
+        const expectedMineCountPerCell = minesToPlace/Math.max(0, this.width*this.height - 9);
+        const giveBigSafeSpot = this.width >= 5 && this.height >= 5;
+        const safeDistance = giveBigSafeSpot ? 1 : 0;
 
-            if (x == excludeX && y == excludeY) {
-                continue;
+        if (expectedMineCountPerCell > 0.6) {
+            // Slow but safe method. Make a list of all available places, put it in an list, shuffle the list and pop until we placed all.
+            const cells: [number, number][] = [];
+            const backupCells: [number, number][] = [];
+            for (let x = 0; x < this.width; x++) {
+                for (let y = 0; y < this.height; y++) {
+                    // Don't place mines in the 3x3 area around start
+                    if (Math.abs(x - excludeX) <= safeDistance && Math.abs(y - excludeY) <= safeDistance) {
+                        if (x != excludeX || y != excludeY) {
+                            backupCells.push([x, y]);
+                        }
+                        continue;
+                    }
+                    cells.push([x, y]);
+                }
             }
 
-            if (this.board[x][y].mine == false) {
+            utils.shuffleArray(cells);
+            utils.shuffleArray(backupCells);
+
+            const allCells = cells.concat(backupCells);
+
+            for (let i = 0;i < minesToPlace; i++) {
+                if (allCells.length == 0) {
+                    break;
+                }
+                const [x, y] = allCells.pop();
                 this.board[x][y].mine = true;
-                minesToPlace--;
-                continue;
-            }
-
-            tries++;
-            if (tries > 100000) {
-                break;
             }
         }
+        else {
+            // Fast but bad worse case. Keep picking random spots until we placed all mines
+            for (let i = 0; i < 10000; i++) {
+                if (minesToPlace <= 0) {
+                    break;
+                }
 
+                const x = this.randomInt(this.width);
+                const y = this.randomInt(this.height);
 
+                // Don't place mines in the 3x3 area around start
+                if (Math.abs(x - excludeX) <= safeDistance && Math.abs(y - excludeY) <= safeDistance) {
+                    continue;
+                }
+
+                if (this.board[x][y].mine == false) {
+                    this.board[x][y].mine = true;
+                    minesToPlace--;
+                    continue;
+                }
+            }
+        }
     }
 
     private getNearCell(x : number, y : number) : number {
@@ -209,7 +251,7 @@ class Board {
                     continue;
                 }
 
-                if (this.GameOver && cell.cleared == false) {
+                if (this.gameOver && cell.cleared == false) {
                     message += `◻️`;
                     continue;
                 }
@@ -241,7 +283,7 @@ class Board {
     }
 
     public getElapsedSeconds(): number {
-        if (this.GameOver) {
+        if (this.gameOver) {
             return this.timeEnded - this.timeStarted;
         } else {
             return Date.now() - this.timeStarted;

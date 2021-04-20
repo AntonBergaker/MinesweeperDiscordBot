@@ -1,14 +1,14 @@
-import Discord = require("discord.js");
-import {DiscordBot} from "./DiscordBot";
+import * as Discord from "discord.js";
+import {DiscordBot} from "./DiscordBot/DiscordBot";
 import { BoardLibrary } from "./BoardLibrary";
 import Express = require("express");
 import { readFileSync } from "fs";
 
-const config = JSON.parse(readFileSync("./config.json", 'utf8'));
+import * as config from "../config.json";
 
 const client = new Discord.Client();
 const boards = new BoardLibrary();
-const discordbot = new DiscordBot(new Discord.Client(), config["identifier"], boards, config["url"], config["token"]);
+const discordbot = new DiscordBot(client, boards, config);
 
 const instantCloseWebpage = readFileSync("./pages/autoclose.html", 'utf8');
 const unknownWebpage = readFileSync("./pages/unknown.html", 'utf8');
@@ -45,8 +45,8 @@ app.get('*', (req, res) => {
 
     discordbot.editGameMessage(board);
 
-    if (board.GameOver) {
-        boards.removeBoard(board.ID);
+    if (board.gameOver) {
+        boards.removeBoard(board.id);
     }
 
     res.send(instantCloseWebpage)

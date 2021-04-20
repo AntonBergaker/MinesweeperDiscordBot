@@ -26,12 +26,12 @@ class BoardLibrary {
         this.boardsByID.delete(boardID);
     }
 
-    public makeBoard(width : number, height : number, mines : number, channelID : string) : Board {
-        const board = new Board(width, height, mines);
+    public makeBoard(width : number, height : number, mines : number, channelID : string, starterID: string) : Board {
+        const board = new Board(width, height, mines, starterID);
         board.setID(this.chooseBoardID());
 
         this.boardsByChannel.set(channelID, board);
-        this.boardsByID.set(board.ID, board);
+        this.boardsByID.set(board.id, board);
 
         return board;
     }
