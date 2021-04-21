@@ -286,7 +286,7 @@ class Board {
                     message += "🏳";
                     continue;
                 }
-                if (cell.flagged && this.blewUp) {
+                if (cell.flagged && this.gameOver) {
                     message += "🚩";
                     continue;
                 }
@@ -314,7 +314,7 @@ class Board {
                     continue;
                 }
 
-                if (cell.nearby != 0 && !this.blewUp) {
+                if (cell.nearby != 0 && !this.gameOver) {
                     message += `[${Board.numbers[cell.nearby]}](${url}/${cell.url})`;
                     continue;
                 }
