@@ -99,6 +99,7 @@ export class DiscordBot {
             .setTitle(board.printLeft())
             .setDescription(description)
             .setColor(0x4EAF51)
+            .addField('\u200b', board.printMode(this.url))
             .setFooter("Made by Anton Bergåker");
     }
 

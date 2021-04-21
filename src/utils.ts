@@ -5,7 +5,7 @@ export function clamp(num : number, min : number, max : number) : number {
 }
 
 export function getIdentifier(config: Config) {
-    typeof config.identifier == "string" ? config.identifier : config.identifier[0];
+    return typeof config.identifier == "string" ? config.identifier : config.identifier[0];
 }
 
 export function shuffleArray(array: any[]) {

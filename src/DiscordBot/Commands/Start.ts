@@ -22,7 +22,7 @@ export class Start extends Command {
         return ""+
 `Starts a new game! You can optionally provide the mine count and the width and height.
 Mine count can be given as a number or a percentage.
-Width and height are limited to ${(width == height ? width : height + " and " + width)}
+Width and height are limited to ${(width == height ? width : height + " and " + width)}.
 
 *Examples:*
 \`${identifier} start\` - starts a ${width}x${height} big board.
@@ -43,7 +43,7 @@ Width and height are limited to ${(width == height ? width : height + " and " + 
         const channelBoard = this.boards.boardForChannel(msg.channel.id);
 
         if (channelBoard) {
-            msg.reply(`This channel already has an active board: ${channelBoard.message.url}\nTo remove the old game use \`minesweeper remove\``);
+            msg.reply(`This channel already has an active board: ${channelBoard.message.url}\nTo remove the old game use \`${utils.getIdentifier(this.config)} stop\``);
             return;
         }
 

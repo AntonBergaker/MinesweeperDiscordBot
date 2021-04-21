@@ -1,8 +1,9 @@
 import * as Discord from "discord.js";
 import {DiscordBot} from "./DiscordBot/DiscordBot";
 import { BoardLibrary } from "./BoardLibrary";
-import Express = require("express");
+import * as Express from "express";
 import { readFileSync } from "fs";
+import * as CookieParser from "cookie-parser";
 
 import * as config from "../config.json";
 
@@ -11,11 +12,55 @@ const boards = new BoardLibrary();
 const discordbot = new DiscordBot(client, boards, config);
 
 const instantCloseWebpage = readFileSync("./pages/autoclose.html", 'utf8');
+const clickedCellWebpage = instantCloseWebpage.replace("{INSERT_TEXT_HERE}", "Beep boop you clicked a cell. This window should close automatically, so hopefully you don't see this.");
+const setFlaggingWebpage = instantCloseWebpage.replace("{INSERT_TEXT_HERE}", "Beep boop you're now flagging. This window should close automatically, so hopefully you don't see this.");
+const removeFlaggingWebpage = instantCloseWebpage.replace("{INSERT_TEXT_HERE}", "Beep boop you're no longer flagging. This window should close automatically, so hopefully you don't see this.");
 const unknownWebpage = readFileSync("./pages/unknown.html", 'utf8');
 
 const app = Express();
 const port = Number(config["port"]);
+
+app.use(CookieParser())
 app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+
+
+app.get('/set-flagging/*', (req, res) => {
+    res.statusCode = 200;
+
+    const parts = req.url.split('/');
+    const lastSegment = parts.pop() || parts.pop();
+    
+    const gameId = Number(lastSegment);
+    const board = boards.boardFromID(gameId);
+
+    if (!board) {
+        res.statusCode = 400;
+        res.send(unknownWebpage);
+        return;
+    }
+
+    res.cookie(lastSegment + '_flagging', true, { maxAge: 15*60*1000 })
+    res.send(setFlaggingWebpage)
+});
+
+app.get('/remove-flagging/*', (req, res) => {
+    res.statusCode = 200;
+
+    const parts = req.url.split('/');
+    const lastSegment = parts.pop() || parts.pop();
+    
+    const gameId = Number(lastSegment);
+    const board = boards.boardFromID(gameId);
+
+    if (!board) {
+        res.statusCode = 400;
+        res.send(unknownWebpage);
+        return;
+    }
+
+    res.clearCookie(lastSegment + '_flagging');
+    res.send(removeFlaggingWebpage)
+});
 
 app.get('*', (req, res) => {
     res.statusCode = 200;
@@ -25,6 +70,8 @@ app.get('*', (req, res) => {
         res.send(unknownWebpage);
         return;
     }
+
+    console.log(req.cookies);
 
     const data = Buffer.from(codeMaybe, 'base64');
 
@@ -41,8 +88,12 @@ app.get('*', (req, res) => {
         return;
     }
 
-    board.clear(x, y);
-
+    if (req.cookies[gameID + '_flagging']) {
+        board.flag(x, y);
+    }
+    else {
+        board.clear(x, y);
+    }
     discordbot.editGameMessage(board);
 
     if (board.gameOver) {
@@ -51,4 +102,3 @@ app.get('*', (req, res) => {
 
     res.send(instantCloseWebpage)
 });
-

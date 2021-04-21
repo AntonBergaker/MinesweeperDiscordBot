@@ -2,8 +2,7 @@ export {Board, Cell}
 import Discord = require("discord.js");
 import * as utils from "./utils";
 
-class Board {
-    
+class Board {    
     private board : Cell[][];
     private minesLeft : number;
     private placedMines : boolean;
@@ -104,13 +103,16 @@ class Board {
 
         toClear.forEach(cell => {
             const [xx, yy] = cell;
+            if (this.board[xx][yy].flagged) {
+                this.board[xx][yy].flagged = false;
+            }
             this.clear(xx, yy);
         });
 
         return count;
     }
 
-    public clear(x : number, y : number) {
+    public clear(x : number, y : number): boolean {
         if (this.placedMines == false) {
             this.placedMines = true;
             this.timeStarted = Date.now();
@@ -119,6 +121,12 @@ class Board {
         }
 
         const cell = this.board[x][y];
+        if (cell.cleared) {
+            return false;
+        }
+        if (cell.flagged) {
+            return false;
+        }
         if (cell.mine) {
             this.blewUp = true;
             this.timeEnded = Date.now();
@@ -138,6 +146,18 @@ class Board {
         if (cell.mine == false && cell.nearby == 0) {
             this.clearNearby(x, y);
         }
+        return true;
+    }
+
+    public flag(x: number, y: number): boolean {
+        const cell = this.board[x][y];
+
+        if (cell.cleared) {
+            return false;
+        }
+
+        cell.flagged = !cell.flagged;
+        return true;
     }
 
     private randomInt(max : number) : number {
@@ -241,6 +261,19 @@ class Board {
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
                 const cell = this.board[x][y];
+                
+                if (cell.flagged && this.blewUp && !cell.mine) {
+                    message += "🏴";
+                    continue;
+                }
+                if (cell.flagged && this.blewUp) {
+                    message += "🚩";
+                    continue;
+                }
+                if (cell.flagged) {
+                    message += `[🚩](${url}/${cell.url})`;
+                    continue;
+                }
                 if (cell.blewUp && cell.mine) {
                     message += "💥";
                     continue;
@@ -282,6 +315,10 @@ class Board {
         return "Remaining: " + this.leftToClear;
     }
 
+    public printMode(url: string): string {
+        return `Set click action: [🚩](${url}/set-flagging/${this.id}) / [◻️](${url}/remove-flagging/${this.id})`;
+    }
+
     public getElapsedSeconds(): number {
         if (this.gameOver) {
             return this.timeEnded - this.timeStarted;
@@ -292,10 +329,11 @@ class Board {
 }
 
 class Cell {
-    public mine : boolean
-    public blewUp : boolean
-    public nearby : number
-    public cleared : boolean
+    public mine : boolean;
+    public blewUp : boolean;
+    public nearby : number;
+    public cleared : boolean;
+    public flagged : boolean;
     public markedForClearing : boolean;
     public url : string;
 
