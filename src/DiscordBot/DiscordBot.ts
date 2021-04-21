@@ -28,7 +28,7 @@ export class DiscordBot {
         client.on('ready', () => {
             console.log(`Logged in as ${client.user.tag}!`);
         });
-        
+        client.on('rateLimit', (rateLimit) => rateLimit.timeDifference)
         client.on('message', (msg) => this.handleMessage(msg));
         
         client.login(config.token);
@@ -39,7 +39,7 @@ export class DiscordBot {
             new Start(this, boards, config),
             new Stop(this, boards, config)
         ]
-        unsortedCommands[0] = new Help(this, unsortedCommands)
+        unsortedCommands[0] = new Help(this, config, unsortedCommands)
 
         for (const command of unsortedCommands) {
             for (const identifier of command.identifiers) {

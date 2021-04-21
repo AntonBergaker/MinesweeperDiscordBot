@@ -26,9 +26,8 @@ class BoardLibrary {
         this.boardsByID.delete(boardID);
     }
 
-    public makeBoard(width : number, height : number, mines : number, channelID : string, starterID: string) : Board {
-        const board = new Board(width, height, mines, starterID);
-        board.setID(this.chooseBoardID());
+    public makeBoard(width : number, height : number, mines : number, channelID : string, boardStartedId: string) : Board {
+        const board = new Board(width, height, mines, this.chooseBoardID(), boardStartedId);
 
         this.boardsByChannel.set(channelID, board);
         this.boardsByID.set(board.id, board);

@@ -22,7 +22,7 @@ export class Start extends Command {
         return ""+
 `Starts a new game! You can optionally provide the mine count and the width and height.
 Mine count can be given as a number or a percentage.
-Width and height are limited to ${(width == height ? width : height + " and " + width)}.
+Width and height are limited to ${(width == height ? width : width + " and " + height)}.
 
 *Examples:*
 \`${identifier} start\` - starts a ${width}x${height} board.

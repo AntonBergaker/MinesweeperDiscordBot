@@ -17,7 +17,7 @@ class Board {
 
     private timeStarted : number;
     private timeEnded : number;
-    private _starterUserId: string;
+    private _boardStarterId: string;
 
     get id() : number {
         return this._id;
@@ -27,14 +27,14 @@ class Board {
         return this.blewUp || this.won;
     }
 
-    get starterUserId(): string {
-        return this._starterUserId;
+    get boardStarterId(): string {
+        return this._boardStarterId;
     }
 
     public message : Discord.Message;
 
-    constructor(width : number, height : number, mines : number, starterUserId: string) {
-        
+    constructor(width : number, height : number, mines : number, boardId:number, boardStarterId: string) {
+        this._id = boardId;
         this.width = width;
         this.height = height;
         this.totalMines = mines;
@@ -43,7 +43,7 @@ class Board {
         this.blewUp = false;
         this.won = false;
 
-        this._starterUserId = starterUserId;
+        this._boardStarterId = boardStarterId;
 
         this.board = new Array<Array<Cell>>(width);
         for (let x=0;x<width;x++) {
@@ -54,10 +54,6 @@ class Board {
         }
         this.minesLeft = mines;
         this.leftToClear = width*height - mines;
-    }
-
-    public setID(id : number) {
-        this._id = id;
         this.setCellUrls();
     }
 
@@ -281,7 +277,6 @@ class Board {
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
                 const cell = this.board[x][y];
-                
                 if (cell.flagged && this.blewUp && !cell.mine) {
                     message += "🏳";
                     continue;
@@ -298,22 +293,18 @@ class Board {
                     message += "💥";
                     continue;
                 }
-
                 if (this.blewUp && cell.mine) {
                     message += "💣";
                     continue;
                 }
-
                 if (this.gameOver && cell.cleared == false) {
                     message += `◻️`;
                     continue;
                 }
-
                 if (cell.cleared == false) {
                     message += `[◻️](${url}/${cell.url})`;
                     continue;
                 }
-
                 if (cell.nearby != 0 && !this.gameOver) {
                     message += `[${Board.numbers[cell.nearby]}](${url}/${cell.url})`;
                     continue;
@@ -351,9 +342,7 @@ class Board {
         }
     }
 
-    private foreachNearbyCell(x: number, y: number, func: (cell: Cell, x: number, y: number) => void ): void;
-    private foreachNearbyCell(x: number, y: number, func: (cell: Cell) => void ): void;
-    private foreachNearbyCell(x: number, y: number, func: ((cell: Cell) => void) | ((cell: Cell, x: number, y: number) => void )): void {
+    private foreachNearbyCell(x: number, y: number, func: (cell: Cell, x?: number, y?: number) => void ): void {
         const x0 = utils.clamp(x-1, 0, this.width-1);
         const y0 = utils.clamp(y-1, 0, this.height-1);
         const x1 = utils.clamp(x+1, 0, this.width-1);

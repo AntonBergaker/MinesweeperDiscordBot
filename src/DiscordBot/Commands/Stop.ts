@@ -29,7 +29,7 @@ export class Stop extends Command {
         }
 
         let removePermission = false;
-        if (channelBoard.starterUserId == msg.member.id) {
+        if (channelBoard.boardStarterId == msg.member.id) {
             removePermission = true;
         } else if (msg.member.hasPermission("ADMINISTRATOR") || msg.member.hasPermission("MANAGE_MESSAGES")) {
             removePermission = true;

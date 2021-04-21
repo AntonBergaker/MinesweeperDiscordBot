@@ -1,0 +1,8 @@
+{
+    "identifier": "minesweeper",
+    "token": "UR_BOT_TOKEN_HERE",
+    "url": "http://localhost",
+    "port": 80,
+    "max_width": 8,
+    "max_height": 7
+}

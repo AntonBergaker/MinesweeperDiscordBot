@@ -88,10 +88,11 @@ app.get('*', (req, res) => {
 
     const isFlagging = req.cookies[gameID + '_flagging'] != undefined;
 
-    board.click(x, y, isFlagging);
+    const hadAChange = board.click(x, y, isFlagging);
 
-
-    discordbot.editGameMessage(board);
+    if (hadAChange) {
+        discordbot.editGameMessage(board);
+    }
 
     if (board.gameOver) {
         boards.removeBoard(board.id);
