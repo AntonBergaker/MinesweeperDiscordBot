@@ -2,7 +2,7 @@ export {Board, Cell}
 import Discord = require("discord.js");
 import * as utils from "./utils";
 
-class Board {    
+class Board {
     private board : Cell[][];
     private minesLeft : number;
     private placedMines : boolean;
@@ -76,30 +76,17 @@ class Board {
     }
 
     private clearNearby(x : number, y : number) {
-        const x0 = utils.clamp(x-1, 0, this.width-1);
-        const y0 = utils.clamp(y-1, 0, this.height-1);
-        const x1 = utils.clamp(x+1, 0, this.width-1);
-        const y1 = utils.clamp(y+1, 0, this.height-1);
-        
         let count = 0;
         const toClear : [number, number][] = [];
 
-        for (let xx = x0; xx <= x1; xx++) {
-            for (let yy = y0; yy <= y1; yy++) {
-                if (x == xx && y == yy) {
-                    continue;
-                }
-
-                const cell = this.board[xx][yy];
-
-                if (cell.markedForClearing) {
-                    continue;
-                }
-
-                this.board[xx][yy].markedForClearing = true;
-                toClear.push([xx, yy]);
+        this.foreachNearbyCell(x, y, (cell, xx, yy) => {
+            if (cell.markedForClearing) {
+                return;
             }
-        }
+
+            cell.markedForClearing = true;
+            toClear.push([xx, yy]);
+        });
 
         toClear.forEach(cell => {
             const [xx, yy] = cell;
@@ -158,6 +145,49 @@ class Board {
 
         cell.flagged = !cell.flagged;
         return true;
+    }
+
+    public chord(x: number, y: number): boolean {
+        const cell = this.board[x][y];
+        if (cell.cleared == false) {
+            return false;
+        }
+        if (cell.nearby == 0) {
+            return false;
+        }
+        if (cell.nearby != this.flagCountAroundCell(x, y)) {
+            return false;
+        }
+
+        this.foreachNearbyCell(x, y, (cell, xx, yy) => {
+            if (cell.flagged) {
+                return;
+            }
+            this.clear(xx, yy);
+        });
+
+        return true;
+    }
+
+    public click(x: number, y: number, isFlagging: boolean): boolean {
+        const cell = this.board[x][y];
+        if (cell.cleared) {
+            return this.chord(x, y);
+        } else if (isFlagging) {
+            return this.flag(x, y);
+        } else {
+            return this.clear(x, y);
+        }
+    }
+
+    private flagCountAroundCell(x: number, y: number): number {
+        let flagCount = 0;
+        this.foreachNearbyCell(x, y, cell => {
+            if (cell.flagged) {
+                flagCount++;
+            }
+        });
+        return flagCount;
     }
 
     private randomInt(max : number) : number {
@@ -224,24 +254,14 @@ class Board {
         }
     }
 
-    private getNearCell(x : number, y : number) : number {
-        const x0 = utils.clamp(x-1, 0, this.width-1);
-        const y0 = utils.clamp(y-1, 0, this.height-1);
-        const x1 = utils.clamp(x+1, 0, this.width-1);
-        const y1 = utils.clamp(y+1, 0, this.height-1);
-        
+    private getNearCell(x : number, y : number) : number {        
         let count = 0;
 
-        for (let xx = x0; xx <= x1; xx++) {
-            for (let yy = y0; yy <= y1; yy++) {
-                if (x == xx && y == yy) {
-                    continue;
-                }
-                if (this.board[xx][yy].mine) {
-                    count++
-                }
+        this.foreachNearbyCell(x, y, cell => {
+            if (cell.mine) {
+                count++
             }
-        }
+        });
 
         return count;
     }
@@ -263,7 +283,7 @@ class Board {
                 const cell = this.board[x][y];
                 
                 if (cell.flagged && this.blewUp && !cell.mine) {
-                    message += "🏴";
+                    message += "🏳";
                     continue;
                 }
                 if (cell.flagged && this.blewUp) {
@@ -294,6 +314,10 @@ class Board {
                     continue;
                 }
 
+                if (cell.nearby != 0 && !this.blewUp) {
+                    message += `[${Board.numbers[cell.nearby]}](${url}/${cell.url})`;
+                    continue;
+                }
                 message += Board.numbers[cell.nearby];
             }
 
@@ -324,6 +348,24 @@ class Board {
             return this.timeEnded - this.timeStarted;
         } else {
             return Date.now() - this.timeStarted;
+        }
+    }
+
+    private foreachNearbyCell(x: number, y: number, func: (cell: Cell, x: number, y: number) => void ): void;
+    private foreachNearbyCell(x: number, y: number, func: (cell: Cell) => void ): void;
+    private foreachNearbyCell(x: number, y: number, func: ((cell: Cell) => void) | ((cell: Cell, x: number, y: number) => void )): void {
+        const x0 = utils.clamp(x-1, 0, this.width-1);
+        const y0 = utils.clamp(y-1, 0, this.height-1);
+        const x1 = utils.clamp(x+1, 0, this.width-1);
+        const y1 = utils.clamp(y+1, 0, this.height-1);
+
+        for (let xx = x0; xx <= x1; xx++) {
+            for (let yy = y0; yy <= y1; yy++) {
+                if (xx == x && yy == y) {
+                    continue;
+                }
+                func(this.board[xx][yy], xx, yy);
+            }
         }
     }
 }

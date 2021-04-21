@@ -25,9 +25,9 @@ Mine count can be given as a number or a percentage.
 Width and height are limited to ${(width == height ? width : height + " and " + width)}.
 
 *Examples:*
-\`${identifier} start\` - starts a ${width}x${height} big board.
-\`${identifier} start 10% 5 5\` - starts a 5x5 big board where 10% of cells are mines.
-\`${identifier} start 10 7 5\` - starts a 7x5 big board with 10 mines.`;
+\`${identifier} start\` - starts a ${width}x${height} board.
+\`${identifier} start 10% 5 5\` - starts a 5x5 board where 10% of cells are mines.
+\`${identifier} start 10 7 5\` - starts a 7x5 board with 10 mines.`;
     }
     
     constructor(bot: DiscordBot, boards: BoardLibrary, config: Config) {

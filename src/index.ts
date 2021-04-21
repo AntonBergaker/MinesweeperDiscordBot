@@ -71,8 +71,6 @@ app.get('*', (req, res) => {
         return;
     }
 
-    console.log(req.cookies);
-
     const data = Buffer.from(codeMaybe, 'base64');
 
     const fullBitMask = data[0] << 16 | data[1] << 8 | data[2];
@@ -88,12 +86,11 @@ app.get('*', (req, res) => {
         return;
     }
 
-    if (req.cookies[gameID + '_flagging']) {
-        board.flag(x, y);
-    }
-    else {
-        board.clear(x, y);
-    }
+    const isFlagging = req.cookies[gameID + '_flagging'] != undefined;
+
+    board.click(x, y, isFlagging);
+
+
     discordbot.editGameMessage(board);
 
     if (board.gameOver) {
