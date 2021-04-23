@@ -7,7 +7,6 @@ import { Stop } from "./Commands/Stop";
 import { Command } from "./Commands/Command";
 import { Config } from "../Config"
 import { printedList } from "../utils";
-import * as dateFns from "date-fns";
 
 export class DiscordBot {
 
