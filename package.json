@@ -1,5 +1,5 @@
 {
-  "name": "MinesweeperDiscordBot2",
+  "name": "MinesweeperDiscordBot",
   "version": "1.0.0",
   "description": "Discord bot that lets you play minesweeper using links",
   "main": "index.js",

@@ -91,7 +91,15 @@ app.get('*', (req, res) => {
     const hadAChange = board.click(x, y, isFlagging);
 
     if (hadAChange) {
-        discordbot.editGameMessage(board);
+        const limitEnd = board.rateLimiter.limitEnd();
+        const now = Date.now();
+        if (now > limitEnd) {
+            discordbot.editGameMessage(board);
+        } else {
+            board.rateLimiter.runOnEnd( () => {
+                discordbot.editGameMessage(board);
+            });
+        }
     }
 
     if (board.gameOver) {

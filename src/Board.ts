@@ -1,5 +1,6 @@
 export {Board, Cell}
 import Discord = require("discord.js");
+import { RateLimiter } from "./RateLimiter";
 import * as utils from "./utils";
 
 class Board {
@@ -8,7 +9,8 @@ class Board {
     private placedMines : boolean;
     private blewUp : boolean;
     private won : boolean;
-    private leftToClear : number;
+    private leftToClear: number;
+    private leftToFlag: number;
 
     private width : number;
     private height : number;
@@ -18,6 +20,8 @@ class Board {
     private timeStarted : number;
     private timeEnded : number;
     private _boardStarterId: string;
+
+    public rateLimiter: RateLimiter;
 
     get id() : number {
         return this._id;
@@ -43,6 +47,7 @@ class Board {
         this.blewUp = false;
         this.won = false;
 
+        this.rateLimiter = new RateLimiter();
         this._boardStarterId = boardStarterId;
 
         this.board = new Array<Array<Cell>>(width);
@@ -54,6 +59,7 @@ class Board {
         }
         this.minesLeft = mines;
         this.leftToClear = width*height - mines;
+        this.leftToFlag = mines;
         this.setCellUrls();
     }
 
@@ -80,6 +86,10 @@ class Board {
                 return;
             }
 
+            if (cell.flagged) {
+                this.leftToFlag++;
+                cell.flagged = false;
+            }
             cell.markedForClearing = true;
             toClear.push([xx, yy]);
         });
@@ -138,8 +148,13 @@ class Board {
         if (cell.cleared) {
             return false;
         }
-
-        cell.flagged = !cell.flagged;
+        if (cell.flagged) {
+            this.leftToFlag++;
+            cell.flagged = false;
+        } else {
+            this.leftToFlag--;
+            cell.flagged = true;
+        }
         return true;
     }
 
@@ -195,6 +210,8 @@ class Board {
         const expectedMineCountPerCell = minesToPlace/Math.max(0, this.width*this.height - 9);
         const giveBigSafeSpot = this.width >= 5 && this.height >= 5;
         const safeDistance = giveBigSafeSpot ? 1 : 0;
+        
+        this.leftToFlag = 0;
 
         if (expectedMineCountPerCell > 0.6) {
             // Slow but safe method. Make a list of all available places, put it in an list, shuffle the list and pop until we placed all.
@@ -224,6 +241,7 @@ class Board {
                 }
                 const [x, y] = allCells.pop();
                 this.board[x][y].mine = true;
+                this.leftToFlag++;
             }
         }
         else {
@@ -243,6 +261,7 @@ class Board {
 
                 if (this.board[x][y].mine == false) {
                     this.board[x][y].mine = true;
+                    this.leftToFlag++;
                     minesToPlace--;
                     continue;
                 }
@@ -270,52 +289,47 @@ class Board {
         }
     }
 
-    static numbers = ["◼️", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"]
-
     public print(url : string) : string {
         let message = "";
         for (let y = 0; y < this.height; y++) {
             for (let x = 0; x < this.width; x++) {
-                const cell = this.board[x][y];
-                if (cell.flagged && this.blewUp && !cell.mine) {
-                    message += "🏳";
-                    continue;
-                }
-                if (cell.flagged && this.gameOver) {
-                    message += "🚩";
-                    continue;
-                }
-                if (cell.flagged) {
-                    message += `[🚩](${url}/${cell.url})`;
-                    continue;
-                }
-                if (cell.blewUp && cell.mine) {
-                    message += "💥";
-                    continue;
-                }
-                if (this.blewUp && cell.mine) {
-                    message += "💣";
-                    continue;
-                }
-                if (this.gameOver && cell.cleared == false) {
-                    message += `◻️`;
-                    continue;
-                }
-                if (cell.cleared == false) {
-                    message += `[◻️](${url}/${cell.url})`;
-                    continue;
-                }
-                if (cell.nearby != 0 && !this.gameOver) {
-                    message += `[${Board.numbers[cell.nearby]}](${url}/${cell.url})`;
-                    continue;
-                }
-                message += Board.numbers[cell.nearby];
+                message += this.printCell(this.board[x][y], url);
             }
 
             message += "\n";
         }
 
         return message;
+    }
+
+    
+    static numbers = ["◼️", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣"];
+    private printCell(cell: Cell, url: string): string {
+        if (cell.flagged && this.blewUp && !cell.mine) {
+            return "🏳";
+        }
+        if (cell.flagged && this.gameOver) {
+            return "🚩";
+        }
+        if (cell.flagged) {
+            return `[🚩](${url}/${cell.url})`;
+        }
+        if (cell.blewUp && cell.mine) {
+            return "💥";
+        }
+        if (this.blewUp && cell.mine) {
+            return "💣";
+        }
+        if (this.gameOver && cell.cleared == false) {
+            return `◻️`;
+        }
+        if (cell.cleared == false) {
+            return `[◻️](${url}/${cell.url})`;
+        }
+        if (cell.nearby != 0 && !this.gameOver) {
+            return `[${Board.numbers[cell.nearby]}](${url}/${cell.url})`;
+        }
+        return Board.numbers[cell.nearby];
     }
 
     public printLeft() : string {
@@ -327,14 +341,14 @@ class Board {
             return "🎉🎉 You win! 🎉🎉";
         }
 
-        return "Remaining: " + this.leftToClear;
+        return `${this.leftToClear}◻️   ${this.leftToFlag}💣`;
     }
 
     public printMode(url: string): string {
         return `Set click action: [🚩](${url}/set-flagging/${this.id}) / [◻️](${url}/remove-flagging/${this.id})`;
     }
 
-    public getElapsedSeconds(): number {
+    public getElapsedMS(): number {
         if (this.gameOver) {
             return this.timeEnded - this.timeStarted;
         } else {

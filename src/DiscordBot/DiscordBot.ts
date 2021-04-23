@@ -6,6 +6,8 @@ import { Start } from "./Commands/Start";
 import { Stop } from "./Commands/Stop";
 import { Command } from "./Commands/Command";
 import { Config } from "../Config"
+import { printedList } from "../utils";
+import * as dateFns from "date-fns";
 
 export class DiscordBot {
 
@@ -79,20 +81,22 @@ export class DiscordBot {
         }
 
         if (board.gameOver) {
-            let seconds = Math.floor(board.getElapsedSeconds() / 1000);
-            let hours = Math.floor(seconds / 60 / 60);
-            seconds-=hours*60*60;
-            let minutes = Math.floor(seconds / 60);
-            seconds -= minutes*60;
-            let string = "";
+            const date = new Date(board.getElapsedMS());
+
+            const hours =  date.getUTCHours();
+            const minutes = date.getUTCMinutes();
+            const seconds = date.getUTCSeconds();
+            
+            const times = [];
+
             if (hours > 0) {
-                string += hours.toString() + (hours == 1 ? " hour" : " hours" + ", ");
+                times.push(hours.toString() + (hours == 1 ? " hour" : " hours"));
             }
             if (minutes > 0) {
-                string += minutes.toString() + (minutes == 1 ? " minute" : " minutes" + ", ");
+                times.push(minutes.toString() + (minutes == 1 ? " minute" : " minutes"));
             }
-            string += seconds.toString() + (seconds == 1 ? " second" : " seconds");
-            description = `\nPlayed for: ${string}\n\n${description}`;
+            times.push(seconds.toString() + (seconds == 1 ? " second" : " seconds"));
+            description = `\nPlayed for ${printedList(times)}\n\n${description}`;
         }
 
         return new Discord.RichEmbed()
@@ -115,6 +119,7 @@ export class DiscordBot {
 
     public async editGameMessage(board : Board) {
         const sentMessage = board.message;
+        board.rateLimiter.add();
         sentMessage.edit(this.getEmbed(board));
     }
 }
