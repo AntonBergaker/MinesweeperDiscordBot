@@ -128,7 +128,6 @@ export class DiscordBot {
         });
         const rateRemaining = reply.headers['x-ratelimit-remaining'];
         const ratesResetTime = reply.headers['x-ratelimit-reset'];
-        console.log({rateRemaining, ratesResetTime});
         if (ratesResetTime != undefined && rateRemaining != undefined) {
             board.rateLimiter.insertRates(Number(ratesResetTime), Number(rateRemaining));
         }
