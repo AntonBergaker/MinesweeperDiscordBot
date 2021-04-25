@@ -1,40 +1,54 @@
 export class RateLimiter {
 
-    private lastTimeStamps:number[] = [0, 0, 0, 0, 0];
-    private insertIndex: number = 0;
-    private queuedEnd = false;
+    private ratesLeft: number;
+    private ratesResetTime: number;
+    private storedDelay = false;
+
+    constructor() {
+        this.ratesLeft = 5;
+        this.ratesResetTime = 0;
+    }
+
     /**
-     * Returns false if we queued 5 things last 5 seconds
+     * Insert new rate information
+     * @param ratesResetTime Time in seconds when the rates reset
+     * @param ratesLeft How many rates are left
      */
-    public isLimited(): boolean {
-        const fiveSecondsAgo = Date.now() - 1000*5;
-        // current writeindex should be the oldest time
-        return this.lastTimeStamps[this.insertIndex] > fiveSecondsAgo;
-
+    public insertRates(ratesResetTime: number, ratesLeft: number) {
+        if (this.ratesResetTime != ratesResetTime) {
+            this.ratesLeft = ratesLeft;
+            this.ratesResetTime = ratesResetTime * 1000;
+        } else {
+            this.ratesLeft = Math.min(this.ratesLeft, ratesLeft);
+        }
     }
 
-    public add(): void {
-        this.lastTimeStamps[this.insertIndex] = Date.now();
-        this.insertIndex = (this.insertIndex + 1) % this.lastTimeStamps.length;
-    }
-
-    public limitEnd(): number {
-        // current writeindex should be the oldest time, so add 5 seconds to it to get the next time we can write
-        return this.lastTimeStamps[this.insertIndex] + 1000*5;
+    public spendRate() {
+        this.ratesLeft--;
     }
 
     /**
      * Run this when reached the end of limit
      */
-    public async runOnEnd( func: () => void ) {
-        if (this.queuedEnd) {
+    public runNowOrDelayed( func: () => void ) {
+        const resetDelay = this.ratesResetTime - Date.now();
+        if (resetDelay < 0) {
+            this.ratesLeft = 99;
+        }
+
+        if (this.ratesLeft > 0) {
+            this.spendRate();
+            func();
             return;
         }
-        this.queuedEnd = true;
-        const delay = this.limitEnd() - Date.now();
+
+        if (this.storedDelay) {
+            return;
+        }
+        this.storedDelay = true;
         setTimeout( () => {
             func();
-            this.queuedEnd = false;
-        }, delay);
+            this.storedDelay = false;
+        }, resetDelay);
     }
 }

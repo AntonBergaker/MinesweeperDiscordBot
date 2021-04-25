@@ -7,40 +7,41 @@ import { Stop } from "./Commands/Stop";
 import { Command } from "./Commands/Command";
 import { Config } from "../Config"
 import { printedList } from "../utils";
+import axios, { AxiosRequestConfig, AxiosResponse, Method } from "axios";
 
 export class DiscordBot {
-
+    private token : string;
     private client : Discord.Client;
     private boards : BoardLibrary;
     private url : string;
     private identifiers : string[];
     private commands: Map<string, Command>;
 
-    constructor(client : Discord.Client, boards: BoardLibrary, config: Config) {
-        this.client = client;
+    constructor(boards: BoardLibrary, config: Config) {
         this.boards = boards;
         this.url = config.url;
+        this.token = config.token;
         if (typeof config.identifier == "string") {
             this.identifiers = [config.identifier];
         } else {
             this.identifiers = config.identifier;
         }
 
-        client.on('ready', () => {
-            console.log(`Logged in as ${client.user.tag}!`);
+        this.client = new Discord.Client();
+        this.client.on('ready', () => {
+            console.log(`Logged in as ${this.client.user.tag}!`);
         });
-        client.on('rateLimit', (rateLimit) => rateLimit.timeDifference)
-        client.on('message', (msg) => this.handleMessage(msg));
+        this.client.on('message', (msg) => this.handleMessage(msg));
         
-        client.login(config.token);
+        this.client.login(config.token);
 
         this.commands = new Map();
-        const unsortedCommands : Command[] = [
-            null,
+        const unsortedCommands : Command[] = [];
+        unsortedCommands.push(
+            new Help(this, config, unsortedCommands),
             new Start(this, boards, config),
             new Stop(this, boards, config)
-        ]
-        unsortedCommands[0] = new Help(this, config, unsortedCommands)
+        );
 
         for (const command of unsortedCommands) {
             for (const identifier of command.identifiers) {
@@ -117,8 +118,36 @@ export class DiscordBot {
     }
 
     public async editGameMessage(board : Board) {
-        const sentMessage = board.message;
-        board.rateLimiter.add();
-        sentMessage.edit(this.getEmbed(board));
+        // Use discordjs to guarantee delivery, otherwise use axios where it wont retry automatically on failed delivery
+        if (board.gameOver) {
+            board.message.edit(this.getEmbed(board));
+            return;
+        }
+        const reply = await this.sendRestRequest("PATCH",`https://discord.com/api/channels/${board.message.channel.id}/messages/${board.message.id}`, {
+            "embed": this.getEmbed(board)
+        });
+        const rateRemaining = reply.headers['x-ratelimit-remaining'];
+        const ratesResetTime = reply.headers['x-ratelimit-reset'];
+        console.log({rateRemaining, ratesResetTime});
+        if (ratesResetTime != undefined && rateRemaining != undefined) {
+            board.rateLimiter.insertRates(Number(ratesResetTime), Number(rateRemaining));
+        }
+    }
+
+    private async sendRestRequest(method: Method, url: string, data: any, config?: AxiosRequestConfig): Promise<AxiosResponse> {
+        const requestConfig: AxiosRequestConfig = {
+            method,
+            url,
+            data,
+            validateStatus: (_) => true,
+            ...config,
+            headers: {
+                'content-type': 'application/json',
+                Authorization: "Bot " + this.token,
+                ...config?.headers
+            }
+        }
+
+        return axios.request(requestConfig)
     }
 }

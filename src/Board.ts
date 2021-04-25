@@ -46,6 +46,9 @@ class Board {
         this.placedMines = false;
         this.blewUp = false;
         this.won = false;
+        this.timeStarted = 0;
+        this.timeEnded = 0;
+        this.message = null!;
 
         this.rateLimiter = new RateLimiter();
         this._boardStarterId = boardStarterId;
@@ -236,10 +239,11 @@ class Board {
             const allCells = cells.concat(backupCells);
 
             for (let i = 0;i < minesToPlace; i++) {
-                if (allCells.length == 0) {
-                    break;
+                const coords = allCells.pop();
+                if (coords == undefined) {
+                    continue;
                 }
-                const [x, y] = allCells.pop();
+                const [x, y] = coords;
                 this.board[x][y].mine = true;
                 this.leftToFlag++;
             }
@@ -356,7 +360,7 @@ class Board {
         }
     }
 
-    private foreachNearbyCell(x: number, y: number, func: (cell: Cell, x?: number, y?: number) => void ): void {
+    private foreachNearbyCell(x: number, y: number, func: (cell: Cell, x: number, y: number) => void ): void {
         const x0 = utils.clamp(x-1, 0, this.width-1);
         const y0 = utils.clamp(y-1, 0, this.height-1);
         const x1 = utils.clamp(x+1, 0, this.width-1);
@@ -387,6 +391,7 @@ class Cell {
         this.blewUp = false;
         this.nearby = 0;
         this.cleared = false;
+        this.flagged = false;
         this.markedForClearing = false;
         this.url = "";
     }

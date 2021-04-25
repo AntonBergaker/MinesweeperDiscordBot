@@ -1,4 +1,3 @@
-import * as Discord from "discord.js";
 import {DiscordBot} from "./DiscordBot/DiscordBot";
 import { BoardLibrary } from "./BoardLibrary";
 import * as Express from "express";
@@ -7,9 +6,8 @@ import * as CookieParser from "cookie-parser";
 
 import * as config from "../config.json";
 
-const client = new Discord.Client();
 const boards = new BoardLibrary();
-const discordbot = new DiscordBot(client, boards, config);
+const discordbot = new DiscordBot(boards, config);
 
 const instantCloseWebpage = readFileSync("./pages/autoclose.html", 'utf8');
 const clickedCellWebpage = instantCloseWebpage.replace("{INSERT_TEXT_HERE}", "Beep boop you clicked a cell. This window should close automatically, so hopefully you don't see this.");
@@ -91,20 +89,15 @@ app.get('*', (req, res) => {
     const hadAChange = board.click(x, y, isFlagging);
 
     if (hadAChange) {
-        const limitEnd = board.rateLimiter.limitEnd();
-        const now = Date.now();
-        if (now > limitEnd) {
+        board.rateLimiter.runNowOrDelayed( () => {
             discordbot.editGameMessage(board);
-        } else {
-            board.rateLimiter.runOnEnd( () => {
-                discordbot.editGameMessage(board);
-            });
-        }
+        });
+    
     }
 
     if (board.gameOver) {
         boards.removeBoard(board.id);
     }
 
-    res.send(instantCloseWebpage)
+    res.send(clickedCellWebpage)
 });

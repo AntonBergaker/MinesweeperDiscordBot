@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^0.21.1",
     "cookie-parser": "^1.4.5",
     "discord.js": "^11.6.4",
     "express": "^4.17.1",

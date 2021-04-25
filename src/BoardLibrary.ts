@@ -12,16 +12,19 @@ class BoardLibrary {
         this.boardsByID = new Map<number, Board>();
     }
 
-    public boardForChannel(channelID : string) : Board {
+    public boardForChannel(channelID : string) : Board | undefined {
         return this.boardsByChannel.get(channelID);
     }
 
-    public boardFromID(boardID : number) : Board {
+    public boardFromID(boardID : number) : Board | undefined {
         return this.boardsByID.get(boardID);
     }
 
     public removeBoard(boardID : number) {
         const board = this.boardFromID(boardID);
+        if (board == undefined) {
+            return;
+        }
         this.boardsByChannel.delete(board.message.channel.id);
         this.boardsByID.delete(boardID);
     }
