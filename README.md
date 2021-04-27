@@ -13,6 +13,14 @@ Discord bots are allowed to create hyperlinks, links with a different text than 
 Abusing this fact, we can create grids of cells where each cell takes us to a website that works out what cell we pressed based on the url.
 However, url's are big and Discord limits each message to 2048 characters.
 Luckily emoji count as one character and we can do some clever bit magic to compress as much info into as short urls as possible.
+Currently it uses 4 characters encoded in base64, which gives us 3 bytes of information per link.
+Boards are under 16 characters wide and tall, so one byte is enough to store both the x/y of the cell.
+This leaves us with two bytes to identify the board, meaning it's possible to support 65536 simulationous games under the same domain.
+
+It's possible to go between flagging and clearing cells, using the same url.
+This is done with a dedicated url to set yourself to either flagging or clearing.
+The url will set or remove a cookie that expires after 15 minutes which is then used by the server to determine what action to perform under each cell.
+Sadly it's not possible to indicate in any way what mode you're currently using, which is a bit poor UX.
 
 ## Why?
 Hmm.
