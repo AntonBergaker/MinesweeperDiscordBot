@@ -22,7 +22,6 @@ export class RateLimiter {
         } else {
             this.ratesLeft = Math.min(this.ratesLeft, ratesLeft);
         }
-        console.log({left: this.ratesLeft, reset: this.ratesResetTime})
     }
 
     public spendRate() {
@@ -34,7 +33,6 @@ export class RateLimiter {
      */
     public runNowOrDelayed( func: (wasDelayed: boolean) => void ) {
         const resetDelay = this.ratesResetTime - Date.now();
-        console.log(resetDelay);
         if (resetDelay < 0) {
             this.ratesLeft = 99;
         }

@@ -121,7 +121,9 @@ export class DiscordBot {
         // Use discordjs to guarantee delivery, otherwise use axios where it wont retry automatically on failed delivery
         if (board.gameOver) {
             board.message.edit(this.getEmbed(board));
+            return;
         }
+        
         const self = this;
         recursiveFunction(5);
         function recursiveFunction(triesLeft: number) {
@@ -141,7 +143,7 @@ export class DiscordBot {
                 
                 // If we were rate limited, try again
                 if (reply.status == 429) {
-                    console.log("failure");
+                    console.log("Unexpected rate limit");
                     recursiveFunction(triesLeft);
                 }
             });
