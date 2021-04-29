@@ -121,15 +121,30 @@ export class DiscordBot {
         // Use discordjs to guarantee delivery, otherwise use axios where it wont retry automatically on failed delivery
         if (board.gameOver) {
             board.message.edit(this.getEmbed(board));
-            return;
         }
-        const reply = await this.sendRestRequest("PATCH",`https://discord.com/api/channels/${board.message.channel.id}/messages/${board.message.id}`, {
-            "embed": this.getEmbed(board)
-        });
-        const rateRemaining = reply.headers['x-ratelimit-remaining'];
-        const ratesResetTime = reply.headers['x-ratelimit-reset'];
-        if (ratesResetTime != undefined && rateRemaining != undefined) {
-            board.rateLimiter.insertRates(Number(ratesResetTime), Number(rateRemaining));
+        const self = this;
+        recursiveFunction(5);
+        function recursiveFunction(triesLeft: number) {
+            triesLeft--;
+            if (triesLeft <= 0) {
+                return;
+            }
+            board.rateLimiter.runNowOrDelayed(async () => {
+                const reply = await self.sendRestRequest("PATCH",`https://discord.com/api/channels/${board.message.channel.id}/messages/${board.message.id}`, {
+                    "embed": self.getEmbed(board)
+                });
+                const rateRemaining = reply.headers['x-ratelimit-remaining'];
+                const ratesResetTime = reply.headers['x-ratelimit-reset'];
+                if (ratesResetTime != undefined && rateRemaining != undefined) {
+                    board.rateLimiter.insertRates(Number(ratesResetTime), Number(rateRemaining));
+                }
+                
+                // If we were rate limited, try again
+                if (reply.status == 429) {
+                    console.log("failure");
+                    recursiveFunction(triesLeft);
+                }
+            });
         }
     }
 

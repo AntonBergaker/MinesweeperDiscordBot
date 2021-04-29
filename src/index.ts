@@ -5,6 +5,7 @@ import { readFileSync } from "fs";
 import * as CookieParser from "cookie-parser";
 
 import * as config from "../config.json";
+import { Board } from "./Board";
 
 const boards = new BoardLibrary();
 const discordbot = new DiscordBot(boards, config);
@@ -89,10 +90,7 @@ app.get('*', (req, res) => {
     const hadAChange = board.click(x, y, isFlagging);
 
     if (hadAChange) {
-        board.rateLimiter.runNowOrDelayed( () => {
-            discordbot.editGameMessage(board);
-        });
-    
+        discordbot.editGameMessage(board);
     }
 
     if (board.gameOver) {
