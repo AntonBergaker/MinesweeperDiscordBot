@@ -12,7 +12,7 @@
     "axios": "^0.21.1",
     "cookie-parser": "^1.4.5",
     "discord.js": "^11.6.4",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.9"
   },
