@@ -11,11 +11,14 @@ It has all features you'd expect, like flagging and more advanced features like 
 ## How? 
 Discord bots are allowed to create hyperlinks, links with a different text than destination.
 Abusing this fact, we can create grids of cells where each cell takes us to a website that works out what cell we pressed based on the url.
-However, url's are big and Discord limits each message to 2048 characters.
+However, url's are big and Discord limits each message to 4096 characters.
 Luckily emoji count as one character and we can do some clever bit magic to compress as much info into as short urls as possible.
 Currently it uses 4 characters encoded in base64, which gives us 3 bytes of information per link.
 Boards are under 16 characters wide and tall, so one byte is enough to store both the x/y of the cell.
 This leaves us with two bytes to identify the board, meaning it's possible to support 65536 simulationous games under the same domain.
+
+These improvements actually puts us down far enough we hit another limit, Discord will starting hiding links once there's 100 of them in one message.
+This is why the limit is set to 100 mines currently. Even with 100 mines one mine is not clickable because it starts hiding the 100th one.
 
 It's possible to go between flagging and clearing cells, using the same url.
 This is done with a dedicated url to set yourself to either flagging or clearing.
@@ -30,17 +33,8 @@ Hmm.
 This mean we can get more information from the same url length by using foreign characters.
 I believe using some hacked together version of "base256" could either enable shorter urls(meaning larger game boards) or more dense ones, meaning more possible simultanous games.
 
-- Almost all 2048 characters are consumed by links.
+- Almost all 4096 characters are consumed by links.
 We can cut down on the amount of links by having the bot automatically clear the first cell, and after this only put links on cells one can reasonably have a reason to press.
 Takes some work though, especially making sure we don't get stuck in "weird" situations where we do have to press out of the way cells.
 
 - A shorter domain would be nice, but they're hard to get by. Currently using `uwuo.eu`.
-
-## Running your own version
-To begin, rename `config_sample.json` to `config.json`. Inside the config, fill out the following values:
-* `identifier` - What word the bot responds to. By default this is minesweeper. You can also set it to an array of strings and it'll respond to each one.
-* `token` - The discord bot token for your bot.
-* `url` - The url the links should point at. A shorter url lets you have a bigger board.
-* `port` - Port the webserver should listen to.
-* `max_width` - The max and default board width.
-* `max_height` - The max and default board height.
