@@ -156,7 +156,7 @@ public class DiscordBot {
             LogSeverity.Debug => LogLevel.Debug,
             LogSeverity.Verbose => LogLevel.Trace,
             _ => LogLevel.None
-        }, "{Message}", arg.Message);
+        }, "{Message}", arg.Exception?.ToString() ?? arg.Message);
         return Task.CompletedTask;
     }
 
