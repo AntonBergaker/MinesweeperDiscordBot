@@ -270,4 +270,33 @@ public class Board {
             }
         }
     }
+
+    public static Board CreateFromString(string str) {
+        var lines = str.Replace("\r\n", "\n").Split("\n", StringSplitOptions.RemoveEmptyEntries);
+        var height = lines.Length;
+        var width = lines[0].Length;
+
+        var board = new Board(width, height, 0);
+        var mineCount = 0;
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                var cell = lines[y][x];
+                if (cell != 'X') {
+                    continue;
+                }
+                board._cells[x, y].IsMine = true;
+                mineCount++;
+            }
+        }
+
+
+        board.StartTime = DateTimeOffset.UtcNow;
+        board.LeftToFlag = mineCount;
+        board.LeftToClear = width * height - board.LeftToFlag;
+        board._hasPlacedMines = true;
+        board.CalculateNearMineNumbers();
+
+        return board;
+    }
 }

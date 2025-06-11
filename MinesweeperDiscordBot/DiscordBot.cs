@@ -92,15 +92,34 @@ public class DiscordBot {
             return @default;
         }
 
-        int width = Math.Clamp(ReadOption("width", 10), 1 , 10);
-        int height = Math.Clamp(ReadOption("height", 10), 1, 10);
-        int mines = Math.Clamp(ReadOption("mines", width*height*17/100-2), 0, width * height - 1);
+        Board board;
 
-        var board = new Board(width, height, mines);
+        if (ReadOption("width", 10) == 1337) {
+            board = Board.CreateFromString(
+                """
+                OOXOOXOXOOO
+                OOXOOXOXOXO
+                OOXOOXOXOXO
+                OOOOOXOOOOO
+                XXXXXXXXXXX
+                OOOOOXOOOOO
+                OXOXOXOXOOO
+                OXOXOXOXOOO
+                OXOXOXOXOXX
+                """
+            );
+        } else {
+            int width = Math.Clamp(ReadOption("width", 10), 1, 10);
+            int height = Math.Clamp(ReadOption("height", 10), 1, 10);
+            int mines = Math.Clamp(ReadOption("mines", width * height * 17 / 100 - 2), 0, width * height - 1);
+
+            board = new Board(width, height, mines);
+        }
         if (_boards.TryAddBoard(board, out var boardId) == false) {
             await arg.RespondAsync("Failed to create a board. There might be too many boards in the wild right now.");
             return;
         }
+
         var discBoard = new DiscordBoard(board, _url, boardId, arg);
         _discordMessagesPerGuild.TryAdd(guild, discBoard);
         discBoard.GameOver += () => {
