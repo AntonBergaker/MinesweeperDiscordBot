@@ -7,7 +7,7 @@ public class Tests {
     [Test]
     public void Serializer() {
         var rng = new Random();
-        for (int i = 0; i < 10 ; i++) {
+        for (int i = 0; i < 100 ; i++) {
             ushort id = (ushort)rng.Next(0, ushort.MaxValue);
             int x = rng.Next(0, 16);
             int y = rng.Next(0, 16);
@@ -17,6 +17,8 @@ public class Tests {
             Assert.AreEqual(id, result.id);
             Assert.AreEqual(x, result.x);
             Assert.AreEqual(y, result.y);
+            Assert.IsFalse(serialized.Contains('/'));
+            Assert.IsFalse(serialized.Contains('='));
         }
     }
 }
